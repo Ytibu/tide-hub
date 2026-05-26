@@ -1,0 +1,613 @@
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>tide chat room</title>
+        <style>
+            :root {
+                --bg-1: #07111f;
+                --bg-2: #12243d;
+                --card: rgba(11, 19, 34, 0.78);
+                --card-border: rgba(255, 255, 255, 0.12);
+                --text: #e9eef8;
+                --muted: #9fb0c8;
+                --accent: #62d0ff;
+                --accent-strong: #2aa8ff;
+                --accent-contrast: #06111f;
+                --success: #35d39a;
+                --danger: #ff6b7a;
+                --shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html, body {
+                height: 100%;
+            }
+
+            body {
+                margin: 0;
+                font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+                color: var(--text);
+                background:
+                    radial-gradient(circle at top left, rgba(98, 208, 255, 0.18), transparent 28%),
+                    radial-gradient(circle at bottom right, rgba(53, 211, 154, 0.14), transparent 32%),
+                    linear-gradient(145deg, var(--bg-1), var(--bg-2));
+            }
+
+            .page {
+                min-height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 32px 16px;
+            }
+
+            .shell {
+                width: min(1120px, 100%);
+                display: grid;
+                grid-template-columns: 1.05fr 1.95fr;
+                gap: 20px;
+            }
+
+            .panel {
+                background: var(--card);
+                border: 1px solid var(--card-border);
+                border-radius: 24px;
+                box-shadow: var(--shadow);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+            }
+
+            .sidebar {
+                padding: 28px;
+                display: flex;
+                flex-direction: column;
+                gap: 22px;
+            }
+
+            .brand {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .brand-mark {
+                width: 54px;
+                height: 54px;
+                border-radius: 18px;
+                display: grid;
+                place-items: center;
+                background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+                color: var(--accent-contrast);
+                font-weight: 800;
+                letter-spacing: 0.04em;
+                box-shadow: 0 14px 36px rgba(42, 168, 255, 0.35);
+            }
+
+            .brand h1 {
+                margin: 0;
+                font-size: 30px;
+                line-height: 1.1;
+            }
+
+            .brand p,
+            .help-list,
+            .hint {
+                margin: 0;
+                color: var(--muted);
+                line-height: 1.7;
+            }
+
+            .info-card {
+                padding: 18px;
+                border-radius: 18px;
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+            }
+
+            .status-row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 12px;
+            }
+
+            .chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 12px;
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.06);
+                color: var(--text);
+                font-size: 13px;
+            }
+
+            .chip i {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--muted);
+                display: inline-block;
+            }
+
+            .chip.ok i {
+                background: var(--success);
+            }
+
+            .chip.warn i {
+                background: #f5c24b;
+            }
+
+            .help-list {
+                padding-left: 18px;
+            }
+
+            .help-list li + li {
+                margin-top: 8px;
+            }
+
+            .chat-panel {
+                display: grid;
+                grid-template-rows: auto 1fr auto;
+                min-height: 720px;
+                overflow: hidden;
+            }
+
+            .chat-header {
+                padding: 24px 28px 18px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                display: flex;
+                justify-content: space-between;
+                gap: 16px;
+                align-items: center;
+            }
+
+            .chat-header h2 {
+                margin: 0;
+                font-size: 20px;
+            }
+
+            .chat-header .subtitle {
+                margin-top: 6px;
+                color: var(--muted);
+                font-size: 14px;
+            }
+
+            .message-area {
+                padding: 20px 28px;
+                overflow-y: auto;
+                background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.03));
+            }
+
+            .message-list {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .empty-state {
+                margin: auto;
+                max-width: 440px;
+                text-align: center;
+                color: var(--muted);
+                padding: 44px 16px;
+            }
+
+            .empty-state strong {
+                display: block;
+                color: var(--text);
+                font-size: 18px;
+                margin-bottom: 10px;
+            }
+
+            .message-item {
+                display: flex;
+                justify-content: flex-start;
+            }
+
+            .message-item.system {
+                justify-content: center;
+            }
+
+            .bubble {
+                max-width: min(760px, 100%);
+                padding: 12px 16px;
+                border-radius: 18px;
+                background: rgba(255, 255, 255, 0.06);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+                overflow-wrap: anywhere;
+            }
+
+            .bubble.system {
+                background: rgba(98, 208, 255, 0.12);
+                color: #d8f2ff;
+                font-size: 14px;
+                text-align: center;
+            }
+
+            .bubble .meta {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                align-items: center;
+                margin-bottom: 8px;
+                color: var(--muted);
+                font-size: 12px;
+            }
+
+            .bubble .name {
+                color: #ffffff;
+                font-weight: 600;
+            }
+
+            .bubble .content {
+                white-space: pre-wrap;
+                line-height: 1.7;
+                color: var(--text);
+            }
+
+            .composer {
+                padding: 20px 28px 28px;
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
+                display: grid;
+                gap: 12px;
+            }
+
+            .form-grid {
+                display: grid;
+                grid-template-columns: 200px 1fr auto;
+                gap: 12px;
+            }
+
+            .field {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .field label {
+                color: var(--muted);
+                font-size: 13px;
+            }
+
+            .field input {
+                width: 100%;
+                min-height: 48px;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                background: rgba(255, 255, 255, 0.05);
+                color: var(--text);
+                padding: 0 14px;
+                font-size: 15px;
+                outline: none;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+            }
+
+            .field input::placeholder {
+                color: rgba(159, 176, 200, 0.8);
+            }
+
+            .field input:focus {
+                border-color: rgba(98, 208, 255, 0.8);
+                box-shadow: 0 0 0 4px rgba(42, 168, 255, 0.16);
+            }
+
+            .actions {
+                display: flex;
+                align-items: end;
+            }
+
+            .btn {
+                min-height: 48px;
+                border: 0;
+                border-radius: 14px;
+                padding: 0 18px;
+                font-size: 15px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: transform 0.15s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .btn:hover {
+                transform: translateY(-1px);
+            }
+
+            .btn:active {
+                transform: translateY(0);
+            }
+
+            .btn-primary {
+                background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+                color: var(--accent-contrast);
+                box-shadow: 0 16px 34px rgba(42, 168, 255, 0.28);
+            }
+
+            .btn-secondary {
+                background: rgba(255, 255, 255, 0.08);
+                color: var(--text);
+                border: 1px solid rgba(255, 255, 255, 0.12);
+            }
+
+            .btn:disabled {
+                cursor: not-allowed;
+                opacity: 0.55;
+                transform: none;
+                box-shadow: none;
+            }
+
+            .helper-row {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                gap: 12px;
+                color: var(--muted);
+                font-size: 13px;
+            }
+
+            .helper-row strong {
+                color: var(--text);
+            }
+
+            @media (max-width: 920px) {
+                .shell {
+                    grid-template-columns: 1fr;
+                }
+
+                .chat-panel {
+                    min-height: 640px;
+                }
+
+                .form-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .actions {
+                    align-items: stretch;
+                }
+
+                .btn {
+                    width: 100%;
+                }
+            }
+
+            @media (max-width: 560px) {
+                .page {
+                    padding: 12px;
+                }
+
+                .sidebar,
+                .chat-header,
+                .message-area,
+                .composer {
+                    padding-left: 16px;
+                    padding-right: 16px;
+                }
+
+                .brand h1 {
+                    font-size: 26px;
+                }
+            }
+        </style>
+    </head>
+    <script type="text/javascript">
+        var websocket = null;
+        var connected = false;
+
+        function escapeHtml(text) {
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function scrollToBottom() {
+            var container = document.getElementById("message");
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function write_msg(msg) {
+            var container = document.getElementById("message");
+            var empty = document.getElementById("empty-state");
+            if(empty) {
+                empty.style.display = "none";
+            }
+            container.insertAdjacentHTML("beforeend", msg);
+            scrollToBottom();
+        }
+
+        function writeSystemMsg(text) {
+            write_msg('<div class="message-item system"><div class="bubble system">' + escapeHtml(text) + '</div></div>');
+        }
+
+        function writeChatMsg(time, name, msg) {
+            write_msg(
+                '<div class="message-item"><div class="bubble">' +
+                    '<div class="meta"><span class="name">' + escapeHtml(name) + '</span><span>' + escapeHtml(time) + '</span></div>' +
+                    '<div class="content">' + escapeHtml(msg) + '</div>' +
+                '</div></div>'
+            );
+        }
+
+        function setConnectedState(isConnected) {
+            connected = isConnected;
+            var status = document.getElementById('connection-status');
+            var sendBtn = document.getElementById('send-btn');
+            var loginBtn = document.getElementById('login-btn');
+
+            if(isConnected) {
+                status.innerHTML = '<i></i> 已连接';
+                sendBtn.disabled = false;
+                loginBtn.disabled = true;
+            } else {
+                status.innerHTML = '<i></i> 未连接';
+                sendBtn.disabled = true;
+                loginBtn.disabled = false;
+            }
+        }
+
+        function login() {
+            var nameInput = document.getElementById('tname');
+            var name = nameInput.value.trim();
+            if(!name) {
+                writeSystemMsg('请先填写昵称，再点击登录。');
+                nameInput.focus();
+                return;
+            }
+
+            if(websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.close();
+            }
+
+            writeSystemMsg('正在连接聊天室，请稍候...');
+            websocket = new WebSocket("ws://127.0.0.1:8071/tide/chat");
+
+            websocket.onerror = function() {
+                writeSystemMsg("连接发生错误，请确认服务已启动。");
+            }
+
+            websocket.onopen = function() {
+                var o = {};
+                o.type = "login_request";
+                o.name = name;
+                websocket.send(JSON.stringify(o));
+            }
+
+            websocket.onmessage= function(e) {
+                //alert("onmessage " + e.data);
+                var o = JSON.parse(e.data);
+                if(o.type == "user_enter") {
+                    writeSystemMsg("[" + o.time + "][" + o.name + "] 加入聊天室");
+                } else if(o.type == "user_leave") {
+                    writeSystemMsg("[" + o.time + "][" + o.name + "] 离开聊天室");
+                } else if(o.type == "msg") {
+                    writeChatMsg(o.time, o.name, o.msg);
+                } else if(o.type == "login_response") {
+                    writeSystemMsg("[" + o.result + "][" + o.msg + "]");
+                    if(String(o.result).toLowerCase() == "ok" || String(o.result) == "0" || String(o.result) == "200") {
+                        setConnectedState(true);
+                        document.getElementById('msg').focus();
+                    }
+                }
+            }
+
+            websocket.onclose= function() {
+                setConnectedState(false);
+                writeSystemMsg("服务器已断开连接。");
+            }
+        }
+
+        function sendmsg() {
+            if(!websocket || websocket.readyState !== WebSocket.OPEN) {
+                writeSystemMsg('当前还没有连接成功，请先登录。');
+                return;
+            }
+
+            var msgInput = document.getElementById('msg');
+            var message = msgInput.value.trim();
+            if(!message) {
+                msgInput.focus();
+                return;
+            }
+
+            var o = {}
+            o.type = "send_request";
+            o.msg = message;
+            websocket.send(JSON.stringify(o));
+            msgInput.value = "";
+            msgInput.focus();
+        }
+
+        function initPage() {
+            setConnectedState(false);
+            document.getElementById('msg').addEventListener('keydown', function(e) {
+                if(e.key === 'Enter') {
+                    e.preventDefault();
+                    sendmsg();
+                }
+            });
+
+            document.getElementById('tname').addEventListener('keydown', function(e) {
+                if(e.key === 'Enter') {
+                    e.preventDefault();
+                    login();
+                }
+            });
+        }
+    </script>
+    <body onload="initPage()">
+        <div class="page">
+            <div class="shell">
+                <aside class="panel sidebar">
+                    <div class="brand">
+                        <div class="brand-mark">聊</div>
+                        <h1>tide chat room</h1>
+                        <p>一个轻量的聊天室页面，适合快速接入和演示。界面会尽量把关键信息摆在前面，减少操作成本。</p>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="chip" id="connection-status"><i></i> 未连接</div>
+                        <div class="status-row">
+                            <div class="chip ok"><i></i> 支持回车发送</div>
+                            <div class="chip warn"><i></i> 消息会自动滚动</div>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <p style="margin:0 0 10px 0;color:var(--text);font-weight:600;">使用提示</p>
+                        <ol class="help-list">
+                            <li>先填昵称，点登录后再发消息。</li>
+                            <li>输入框里按 Enter 也可以直接发送。</li>
+                            <li>如果提示断开，请确认服务端已经启动。</li>
+                        </ol>
+                    </div>
+                </aside>
+
+                <main class="panel chat-panel">
+                    <header class="chat-header">
+                        <div>
+                            <h2>聊天室</h2>
+                            <div class="subtitle">登录后即可开始聊天，消息会实时显示在下方。</div>
+                        </div>
+                        <div class="chip"><i></i> WebSocket</div>
+                    </header>
+
+                    <section class="message-area" id="message">
+                        <div class="empty-state" id="empty-state">
+                            <strong>还没有消息</strong>
+                            <div>登录后，这里会显示进出提醒和聊天内容。先试着输入一个昵称开始吧。</div>
+                        </div>
+                    </section>
+
+                    <section class="composer">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label for="tname">昵称</label>
+                                <input id="tname" type="text" placeholder="例如：小明" autocomplete="nickname" />
+                            </div>
+                            <div class="field">
+                                <label for="msg">聊天信息</label>
+                                <input id="msg" type="text" placeholder="输入要发送的内容，按 Enter 可直接发送" autocomplete="off" />
+                            </div>
+                            <div class="actions">
+                                <button id="login-btn" class="btn btn-secondary" onclick="login()">登录</button>
+                                <span style="width:10px;"></span>
+                                <button id="send-btn" class="btn btn-primary" onclick="sendmsg()" disabled>发送</button>
+                            </div>
+                        </div>
+                        <div class="helper-row">
+                            <div>建议先登录，再发送消息。</div>
+                            <div>如果页面空白，通常是服务端未启动。</div>
+                        </div>
+                    </section>
+                </main>
+            </div>
+        </div>
+    </body>
+</html>
