@@ -1,0 +1,24 @@
+{
+    // 为 C/C++ 扩展设置默认的包含路径
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/**",
+        "/home/dingjr/install/vcpkg/installed/x64-linux/include",
+        "/usr/include",
+        "/usr/local/include"
+    ],
+    
+    // 设置浏览路径（用于查找头文件）
+    "C_Cpp.default.browse.path": [
+        "${workspaceFolder}",
+        "/home/dingjr/install/vcpkg/installed/x64-linux/include"
+    ],
+    
+    // 设置编译器路径
+    "C_Cpp.default.compilerPath": "/usr/bin/gcc",
+    
+    // // 设置 C++ 标准
+    // "C_Cpp.default.cppStandard": "c++17",
+    
+    // // 设置 IntelliSense 模式
+    // "C_Cpp.default.intelliSenseMode": "linux-gcc-x64"
+}

@@ -1,0 +1,15 @@
+#include <tide/tide.h>
+
+namespace blog {
+
+class MyModule : public tide::Module {
+public:
+    typedef std::shared_ptr<MyModule> ptr;
+    MyModule();
+    bool onLoad() override;
+    bool onUnload() override;
+    bool onServerReady() override;
+    bool onServerUp() override;
+};
+
+}
